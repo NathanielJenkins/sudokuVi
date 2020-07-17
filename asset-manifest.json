@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/sudokuVi/static/css/main.5f361e03.chunk.css",
+    "main.js": "/sudokuVi/static/js/main.58a0f3aa.chunk.js",
+    "main.js.map": "/sudokuVi/static/js/main.58a0f3aa.chunk.js.map",
+    "runtime-main.js": "/sudokuVi/static/js/runtime-main.3439afc9.js",
+    "runtime-main.js.map": "/sudokuVi/static/js/runtime-main.3439afc9.js.map",
+    "static/js/2.1b773429.chunk.js": "/sudokuVi/static/js/2.1b773429.chunk.js",
+    "static/js/2.1b773429.chunk.js.map": "/sudokuVi/static/js/2.1b773429.chunk.js.map",
+    "index.html": "/sudokuVi/index.html",
+    "precache-manifest.0e1aa02f960ec7975b09e0def71b2c83.js": "/sudokuVi/precache-manifest.0e1aa02f960ec7975b09e0def71b2c83.js",
+    "service-worker.js": "/sudokuVi/service-worker.js",
+    "static/css/main.5f361e03.chunk.css.map": "/sudokuVi/static/css/main.5f361e03.chunk.css.map",
+    "static/js/2.1b773429.chunk.js.LICENSE.txt": "/sudokuVi/static/js/2.1b773429.chunk.js.LICENSE.txt",
+    "static/media/logo.svg": "/sudokuVi/static/media/logo.5d5d9eef.svg"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.3439afc9.js",
+    "static/js/2.1b773429.chunk.js",
+    "static/css/main.5f361e03.chunk.css",
+    "static/js/main.58a0f3aa.chunk.js"
+  ]
+}

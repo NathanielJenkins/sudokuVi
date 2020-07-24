@@ -1,14 +1,14 @@
 {
   "files": {
-    "main.js": "/sudokuVi/static/js/main.9df4f66a.chunk.js",
-    "main.js.map": "/sudokuVi/static/js/main.9df4f66a.chunk.js.map",
+    "main.js": "/sudokuVi/static/js/main.0ac0cee9.chunk.js",
+    "main.js.map": "/sudokuVi/static/js/main.0ac0cee9.chunk.js.map",
     "runtime-main.js": "/sudokuVi/static/js/runtime-main.3439afc9.js",
     "runtime-main.js.map": "/sudokuVi/static/js/runtime-main.3439afc9.js.map",
     "static/css/2.af3c1da9.chunk.css": "/sudokuVi/static/css/2.af3c1da9.chunk.css",
     "static/js/2.8b3a5d9e.chunk.js": "/sudokuVi/static/js/2.8b3a5d9e.chunk.js",
     "static/js/2.8b3a5d9e.chunk.js.map": "/sudokuVi/static/js/2.8b3a5d9e.chunk.js.map",
     "index.html": "/sudokuVi/index.html",
-    "precache-manifest.0fcc90a4290ee90323055320c47ce33a.js": "/sudokuVi/precache-manifest.0fcc90a4290ee90323055320c47ce33a.js",
+    "precache-manifest.549edc611020b75aa17bebfebbe32971.js": "/sudokuVi/precache-manifest.549edc611020b75aa17bebfebbe32971.js",
     "service-worker.js": "/sudokuVi/service-worker.js",
     "static/css/2.af3c1da9.chunk.css.map": "/sudokuVi/static/css/2.af3c1da9.chunk.css.map",
     "static/js/2.8b3a5d9e.chunk.js.LICENSE.txt": "/sudokuVi/static/js/2.8b3a5d9e.chunk.js.LICENSE.txt"
@@ -17,6 +17,6 @@
     "static/js/runtime-main.3439afc9.js",
     "static/css/2.af3c1da9.chunk.css",
     "static/js/2.8b3a5d9e.chunk.js",
-    "static/js/main.9df4f66a.chunk.js"
+    "static/js/main.0ac0cee9.chunk.js"
   ]
 }

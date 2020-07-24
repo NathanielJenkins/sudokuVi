@@ -87,7 +87,7 @@ class Board extends Component {
 			this.backtrack(0, 0, sudokuBoard, true);
 
 			//now that we solved the board, lets delete part of it. Hold 12 numbers
-			for (let i = 0; i < 12; i++) {
+			for (let i = 0; i < 25; i++) {
 				const row = Math.floor(Math.random() * 9);
 				const col = Math.floor(Math.random() * 9);
 				immutableNumbers[row][col] = true;

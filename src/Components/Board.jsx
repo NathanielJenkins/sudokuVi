@@ -32,6 +32,18 @@ const Styled = styled.div`
 	.controls {
 		width: 500px;
 	}
+	.w {
+		background-color: white;
+	}
+	.r {
+		background-color: #ffe6e6;
+	}
+	.g {
+		background-color: #deffe6;
+	}
+	.gr {
+		background-color: #fffcde;
+	}
 `;
 
 class Board extends Component {
@@ -39,6 +51,7 @@ class Board extends Component {
 		currentlyRunning: false,
 		steps: [],
 		sudokuBoard: [],
+		styleBoard: [],
 		immutableNumbers: [],
 	};
 
@@ -50,6 +63,7 @@ class Board extends Component {
 	generate() {
 		const sudokuBoard = [];
 		const immutableNumbers = [];
+		const styleBoard = [];
 
 		for (let i = 0; i < 9; i++) {
 			sudokuBoard.push(["", "", "", "", "", "", "", "", ""]);
@@ -65,9 +79,11 @@ class Board extends Component {
 				false,
 				false,
 			]);
+
+			styleBoard.push(["w", "w", "w", "w", "w", "w", "w", "w", "w"]);
 		}
 
-		this.setState({ immutableNumbers }, () => {
+		this.setState({ immutableNumbers, styleBoard }, () => {
 			this.backtrack(0, 0, sudokuBoard, true);
 
 			//now that we solved the board, lets delete part of it. Hold 12 numbers
@@ -86,7 +102,15 @@ class Board extends Component {
 	solveSudoku = (sudokuBoard) => {
 		//end the viz if it is going
 		this.backtrack(0, 0, sudokuBoard, false);
-		this.setState({ sudokuBoard });
+
+		//clear the styleboard
+		const styleBoard = this.state.styleBoard;
+		for (let row = 0; row < 9; row++) {
+			for (let col = 0; col < 9; col++) {
+				styleBoard[row][col] = "w";
+			}
+		}
+		this.setState({ styleBoard, sudokuBoard });
 	};
 
 	delay = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -96,7 +120,7 @@ class Board extends Component {
 
 		this.setState({ currentlyRunning: true }, async () => {
 			const sudokuBoard = this.state.sudokuBoard;
-
+			const styleBoard = this.state.styleBoard;
 			//the board has not already been solved by the user
 			if (this.state.steps.length === 0) {
 				const sudokuBoardCopy = [];
@@ -120,8 +144,25 @@ class Board extends Component {
 				const step = this.state.steps[i];
 
 				sudokuBoard[step.row][step.col] = step.value;
+				console.log(step.col, step.row);
+
+				if (step.valid) styleBoard[step.row][step.col] = "g";
+				//determine the cells to set red
+				else {
+					for (let i = 0; i < step.cells.length; i++) {
+						const colRow = step.cells[i];
+
+						styleBoard[colRow[0]][colRow[1]] = "r";
+						styleBoard[step.row][step.col] = "gr";
+					}
+				}
 				this.setState({ sudokuBoard });
 				await this.delay(100);
+				styleBoard[step.row][step.col] = "w";
+				for (let i = 0; i < step.cells.length; i++) {
+					const colRow = step.cells[i];
+					styleBoard[colRow[0]][colRow[1]] = "w";
+				}
 			}
 		});
 	};
@@ -178,6 +219,7 @@ class Board extends Component {
 					value: value,
 					valid: validBoard.outcome,
 					reason: validBoard.reason,
+					cells: validBoard.cells,
 				});
 
 				if (validBoard.outcome) {
@@ -193,6 +235,7 @@ class Board extends Component {
 				value: "",
 				valid: null,
 				reason: null,
+				cells: [],
 			});
 		}
 		return end;
@@ -210,30 +253,48 @@ class Board extends Component {
 	};
 
 	isValidSudoku = (board, row, col, value) => {
+		let cells;
+		let outcome;
+		//row check
+		cells = [];
+		outcome = true;
 		for (let i = 0; i < 9; i++) {
+			cells.push([row, i]);
 			if (board[row][i] === value && i !== col) {
-				return { outcome: false, reason: 0 };
+				outcome = false;
 			}
 		}
+		if (!outcome) return { outcome, reason: 0, cells };
 
+		//col check
+		cells = [];
+		outcome = true;
 		for (let i = 0; i < 9; i++) {
+			cells.push([i, col]);
 			if (board[i][col] === value && i !== row) {
-				return { outcome: false, reason: 1 };
+				outcome = false;
 			}
 		}
+		if (!outcome) return { outcome, reason: 1, cells };
 
+		//square check
 		const square = Math.floor(row / 3) + Math.floor(col / 3) * 3;
 		const colStart = Math.floor(square / 3) * 3;
 		const rowStart = (square % 3) * 3;
 
+		cells = [];
+		outcome = true;
 		for (let r = rowStart; r < rowStart + 3; r++) {
 			for (let c = colStart; c < colStart + 3; c++) {
+				cells.push([r, c]);
 				if (board[r][c] === value && row !== r && col !== c) {
-					return { outcome: false, reason: 2 };
+					outcome = false;
 				}
 			}
 		}
-		return { outcome: true, reason: null };
+		if (!outcome) return { outcome: false, reason: 2, cells };
+
+		return { outcome: true, reason: null, cells: [] };
 	};
 
 	changeBoard = async (row, col, value) => {
@@ -248,15 +309,15 @@ class Board extends Component {
 		for (const [indexRow, row] of this.state.sudokuBoard.entries()) {
 			let ent = [];
 			for (const [indexCol, value] of row.entries()) {
-				if (this.state.immutableNumbers[indexRow][indexCol]) {
-					ent.push(
-						<td className="font-weight-bold" key={indexCol + "-" + indexRow}>
-							{value}
-						</td>
-					);
-				} else {
-					ent.push(<td key={indexCol + "-" + indexRow}>{value}</td>);
-				}
+				let classNames = this.state.styleBoard[indexRow][indexCol];
+				if (this.state.immutableNumbers[indexRow][indexCol])
+					classNames += " font-weight-bold";
+
+				ent.push(
+					<td className={classNames} key={indexCol + "-" + indexRow}>
+						{value}
+					</td>
+				);
 			}
 			rows.push(
 				<tr key={indexRow} className="game-row">

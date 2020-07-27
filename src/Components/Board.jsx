@@ -27,6 +27,10 @@ const Styled = styled.div`
 			width: 250px;
 			height: 250px;
 		}
+		.controls {
+			width: 250px;
+			width: 100%;
+		}
 	}
 
 	td:first-child {
@@ -355,7 +359,7 @@ class Board extends Component {
 								<table className="mx-auto mt-4 game-board">
 									<tbody>{rows}</tbody>
 								</table>
-								<ButtonGroup size="md" className="controls mt-1">
+								<ButtonGroup className="controls mt-2">
 									<Button
 										onClick={() => {
 											this.setState({ currentlyRunning: false });

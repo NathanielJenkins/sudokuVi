@@ -8,6 +8,27 @@ const Styled = styled.div`
 		width: 500px;
 		height: 500px;
 	}
+	.controls {
+		width: 500px;
+	}
+
+	@media (max-width: 768px) {
+		.game-board {
+			width: 350px;
+			height: 350px;
+		}
+		.controls {
+			width: 350px;
+		}
+	}
+
+	@media (max-width: 576px) {
+		.game-board {
+			width: 250px;
+			height: 250px;
+		}
+	}
+
 	td:first-child {
 		border-left: solid;
 	}
@@ -28,9 +49,6 @@ const Styled = styled.div`
 	}
 	td.bold {
 		font-weight: bold;
-	}
-	.controls {
-		width: 500px;
 	}
 	.w {
 		background-color: white;
@@ -65,6 +83,7 @@ class Board extends Component {
 		const immutableNumbers = [];
 		const styleBoard = [];
 
+		//init the sudokuBoard, immutableNumbers and the styleBoar
 		for (let i = 0; i < 9; i++) {
 			sudokuBoard.push(["", "", "", "", "", "", "", "", ""]);
 
@@ -82,35 +101,28 @@ class Board extends Component {
 
 			styleBoard.push(["w", "w", "w", "w", "w", "w", "w", "w", "w"]);
 		}
+		this.setState({ styleBoard });
 
-		this.setState({ immutableNumbers, styleBoard }, () => {
+		//set immutableNumbers before the solve since it requires it
+		this.setState({ immutableNumbers }, () => {
 			this.backtrack(0, 0, sudokuBoard, true);
 
 			//now that we solved the board, lets delete part of it. Hold 12 numbers
-			for (let i = 0; i < 25; i++) {
+			for (let i = 0; i < 30; i++) {
 				const row = Math.floor(Math.random() * 9);
 				const col = Math.floor(Math.random() * 9);
 				immutableNumbers[row][col] = true;
 			}
 
 			this.clear(sudokuBoard, immutableNumbers);
-
 			this.setState({ steps: [] });
 		});
 	}
 
 	solveSudoku = (sudokuBoard) => {
-		//end the viz if it is going
+		//solves the sudokuBoard
 		this.backtrack(0, 0, sudokuBoard, false);
-
-		//clear the styleboard
-		const styleBoard = this.state.styleBoard;
-		for (let row = 0; row < 9; row++) {
-			for (let col = 0; col < 9; col++) {
-				styleBoard[row][col] = "w";
-			}
-		}
-		this.setState({ styleBoard, sudokuBoard });
+		this.setState({ styleBoard: this.clearStyleBoard(), sudokuBoard });
 	};
 
 	delay = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -144,15 +156,14 @@ class Board extends Component {
 				const step = this.state.steps[i];
 
 				sudokuBoard[step.row][step.col] = step.value;
-				console.log(step.col, step.row);
 
 				if (step.valid) styleBoard[step.row][step.col] = "g";
 				//determine the cells to set red
 				else {
 					for (let i = 0; i < step.cells.length; i++) {
-						const colRow = step.cells[i];
+						const rowCol = step.cells[i];
 
-						styleBoard[colRow[0]][colRow[1]] = "r";
+						styleBoard[rowCol[0]][rowCol[1]] = "r";
 						styleBoard[step.row][step.col] = "gr";
 					}
 				}
@@ -160,8 +171,8 @@ class Board extends Component {
 				await this.delay(100);
 				styleBoard[step.row][step.col] = "w";
 				for (let i = 0; i < step.cells.length; i++) {
-					const colRow = step.cells[i];
-					styleBoard[colRow[0]][colRow[1]] = "w";
+					const rowCol = step.cells[i];
+					styleBoard[rowCol[0]][rowCol[1]] = "w";
 				}
 			}
 		});
@@ -174,9 +185,22 @@ class Board extends Component {
 				if (!immutableNumbers[row][col]) sudokuBoard[row][col] = "";
 			}
 		}
-		this.setState({ sudokuBoard });
+		this.setState({ styleBoard: this.clearStyleBoard(), sudokuBoard });
 	};
 
+	//sets all the squares in the styleboard to white and returns the cleared board
+	clearStyleBoard = () => {
+		//clear the styleboard
+		const styleBoard = this.state.styleBoard;
+		for (let row = 0; row < 9; row++) {
+			for (let col = 0; col < 9; col++) {
+				styleBoard[row][col] = "w";
+			}
+		}
+		return styleBoard;
+	};
+
+	//takes an array an returns a shuffled version of that array
 	shuffleArray = (array) => {
 		for (let i = array.length - 1; i > 0; i--) {
 			const j = Math.floor(Math.random() * (i + 1));
@@ -185,7 +209,7 @@ class Board extends Component {
 		return array;
 	};
 
-	//returns false if not done, returns true if done
+	//function that solves the board using a recursive backtracking strategy
 	backtrack = (row, col, board, random) => {
 		let end = false;
 
@@ -195,8 +219,8 @@ class Board extends Component {
 
 		// if the current column and row are immutable
 		if (this.state.immutableNumbers[row][col]) {
-			const colRow = this.incrementColRow(row, col);
-			end = this.backtrack(colRow[0], colRow[1], board, random);
+			const rowCol = this.incrementRowCol(row, col);
+			end = this.backtrack(rowCol[0], rowCol[1], board, random);
 
 			// if the current column and row are changeable
 		} else {
@@ -223,8 +247,8 @@ class Board extends Component {
 				});
 
 				if (validBoard.outcome) {
-					const colRow = this.incrementColRow(row, col);
-					end = this.backtrack(colRow[0], colRow[1], board, random);
+					const rowCol = this.incrementRowCol(row, col);
+					end = this.backtrack(rowCol[0], rowCol[1], board, random);
 					if (end) return true;
 				}
 			}
@@ -241,7 +265,8 @@ class Board extends Component {
 		return end;
 	};
 
-	incrementColRow = (row, col) => {
+	//increments the row and column
+	incrementRowCol = (row, col) => {
 		col++;
 
 		if (col === 9) {
@@ -252,6 +277,7 @@ class Board extends Component {
 		return [row, col];
 	};
 
+	//checks if the current board is valid
 	isValidSudoku = (board, row, col, value) => {
 		let cells;
 		let outcome;
@@ -297,12 +323,6 @@ class Board extends Component {
 		return { outcome: true, reason: null, cells: [] };
 	};
 
-	changeBoard = async (row, col, value) => {
-		let sudokuBoard = [...this.state.sudokuBoard];
-		sudokuBoard[row][col] = value;
-		this.setState({ sudokuBoard });
-	};
-
 	render() {
 		// build the sudoku board from above
 		const rows = [];
@@ -339,7 +359,6 @@ class Board extends Component {
 									<Button
 										onClick={() => {
 											this.setState({ currentlyRunning: false });
-
 											this.generate();
 										}}
 										variant="outline-dark"

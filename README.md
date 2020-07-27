@@ -2,8 +2,7 @@
 
 ![Demo](viz.gif)
 
-<p>The following website is a visualization of a simple backtracking algorithm to solve sudoku. It by trying each number then if it can no longer continue backtracking to a place where it can continue<p>
-
+<p>The following website is a visualization of a simple backtracking algorithm to solve sudoku. It works by trying each number in the space then moving foward on success, if it can no longer move forward it backtracks to place it can continue</p>
 <h2>Demo</h2>
 https://nathanieljenkins.github.io/sudokuVi/
 

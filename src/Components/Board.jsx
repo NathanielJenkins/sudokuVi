@@ -1,13 +1,5 @@
 import React, { Component } from "react";
-import {
-	ToggleButtonGroup,
-	ToggleButton,
-	ButtonGroup,
-	Button,
-	Container,
-	Row,
-	Col,
-} from "react-bootstrap";
+import { ButtonGroup, Button, Container, Row, Col } from "react-bootstrap";
 import styled from "styled-components";
 
 const Styled = styled.div`
@@ -87,7 +79,6 @@ class Board extends Component {
 	};
 
 	componentDidMount() {
-		//generate the board
 		this.generate();
 	}
 
@@ -129,9 +120,9 @@ class Board extends Component {
 		this.setState({ currentlyRunning: true }, async () => {
 			let sudokuBoard = this.returnCopyOf2DArray(this.state.sudokuBoard);
 			let styleBoard = this.returnCopyOf2DArray(this.state.styleBoard);
-
+			const { immutableNumbers, steps } = this.state;
 			//the board has not already been solved by the user
-			if (this.state.steps.length === 0) {
+			if (steps.length === 0) {
 				//create a copy of the board, not a reference
 				const sudokuBoardCopy = [];
 
@@ -142,9 +133,9 @@ class Board extends Component {
 				this.backtrack(0, 0, this.returnCopyOf2DArray(sudokuBoard), false);
 			}
 			// the board has already been solved by the user so we need to clear it
-			else this.clear(sudokuBoard, this.state.immutableNumbers);
+			else this.clear(sudokuBoard, immutableNumbers);
 
-			for (let i = 0; i < this.state.steps.length; i++) {
+			for (let i = 0; i < steps.length; i++) {
 				if (!this.state.currentlyRunning) return;
 
 				const step = this.state.steps[i];
@@ -213,12 +204,13 @@ class Board extends Component {
 
 	//function that solves the board using a recursive backtracking strategy
 	backtrack = (row, col, board, random) => {
+		const { immutableNumbers, steps } = this.state;
 		let end = false;
 
 		if (row === 9) return true;
 
 		// if the current column and row are immutable
-		if (this.state.immutableNumbers[row][col]) {
+		if (immutableNumbers[row][col]) {
 			const rowCol = this.incrementRowCol(row, col);
 			end = this.backtrack(rowCol[0], rowCol[1], board, random);
 
@@ -234,13 +226,11 @@ class Board extends Component {
 
 				const validBoard = this.isValidSudoku(board, row, col, value);
 
-				this.state.steps.push({
+				steps.push({
 					col: col,
 					row: row,
 					value: value,
-					valid: validBoard.outcome,
-					reason: validBoard.reason,
-					cells: validBoard.cells,
+					...validBoard,
 				});
 
 				if (validBoard.outcome) {
@@ -250,11 +240,11 @@ class Board extends Component {
 				}
 			}
 			board[row][col] = "";
-			this.state.steps.push({
+			steps.push({
 				col: col,
 				row: row,
 				value: "",
-				valid: null,
+				outcome: null,
 				reason: null,
 				cells: [],
 			});
@@ -321,14 +311,15 @@ class Board extends Component {
 	};
 
 	buildBoard() {
+		const { sudokuBoard, styleBoard, immutableNumbers } = this.state;
 		// build the sudoku board from above
 		const rows = [];
-		for (const [indexRow, row] of this.state.sudokuBoard.entries()) {
+		for (const [indexRow, row] of sudokuBoard.entries()) {
 			let ent = [];
 			for (const [indexCol, value] of row.entries()) {
-				let classNames = this.state.styleBoard[indexRow][indexCol];
+				let classNames = styleBoard[indexRow][indexCol];
 
-				if (this.state.immutableNumbers[indexRow][indexCol])
+				if (immutableNumbers[indexRow][indexCol])
 					classNames += " font-weight-bold";
 
 				ent.push(
@@ -371,13 +362,13 @@ class Board extends Component {
 	};
 
 	colourBoard = (step, styleBoard) => {
-		if (step.valid) styleBoard[step.row][step.col] = "g";
+		if (step.outcome) styleBoard[step.row][step.col] = "g";
 		//determine the cells to set red
 		else {
 			for (let i = 0; i < step.cells.length; i++) {
-				const rowCol = step.cells[i];
+				const [row, col] = step.cells[i];
 
-				styleBoard[rowCol[0]][rowCol[1]] = "r";
+				styleBoard[row][col] = "r";
 				styleBoard[step.row][step.col] = "gr";
 			}
 		}
@@ -385,13 +376,11 @@ class Board extends Component {
 	clearBoard = (step, styleBoard) => {
 		styleBoard[step.row][step.col] = "w";
 		for (let i = 0; i < step.cells.length; i++) {
-			const rowCol = step.cells[i];
-			styleBoard[rowCol[0]][rowCol[1]] = "w";
+			const [row, col] = step.cells[i];
+			styleBoard[row][col] = "w";
 		}
 	};
 	render() {
-		// build the sudoku board from above
-
 		return (
 			<Styled>
 				<Container>

@@ -1,5 +1,13 @@
 import React, { Component } from "react";
-import { ButtonGroup, Button, Container, Row, Col } from "react-bootstrap";
+import {
+	ToggleButtonGroup,
+	ToggleButton,
+	ButtonGroup,
+	Button,
+	Container,
+	Row,
+	Col,
+} from "react-bootstrap";
 import styled from "styled-components";
 
 const Styled = styled.div`
@@ -48,7 +56,7 @@ const Styled = styled.div`
 	td {
 		height: 30px;
 		width: 30px;
-		border: 1px solid;
+		border: 1px lightgrey solid;
 		text-align: center;
 	}
 	td.bold {
@@ -75,6 +83,7 @@ class Board extends Component {
 		sudokuBoard: [],
 		styleBoard: [],
 		immutableNumbers: [],
+		immutableType: true,
 	};
 
 	componentDidMount() {
@@ -83,28 +92,7 @@ class Board extends Component {
 	}
 
 	generate() {
-		const sudokuBoard = [];
-		const immutableNumbers = [];
-		const styleBoard = [];
-
-		//init the sudokuBoard, immutableNumbers and the styleBoar
-		for (let i = 0; i < 9; i++) {
-			sudokuBoard.push(["", "", "", "", "", "", "", "", ""]);
-
-			immutableNumbers.push([
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-			]);
-
-			styleBoard.push(["w", "w", "w", "w", "w", "w", "w", "w", "w"]);
-		}
+		const { sudokuBoard, immutableNumbers, styleBoard } = this.initDataBoards();
 		this.setState({ styleBoard });
 
 		//set immutableNumbers before the solve since it requires it
@@ -123,10 +111,14 @@ class Board extends Component {
 		});
 	}
 
-	solveSudoku = (sudokuBoard) => {
+	solveSudoku = () => {
 		//solves the sudokuBoard
+		let sudokuBoard = this.returnCopyOf2DArray(this.state.sudokuBoard);
 		this.backtrack(0, 0, sudokuBoard, false);
-		this.setState({ styleBoard: this.clearStyleBoard(), sudokuBoard });
+		this.setState({
+			styleBoard: this.clearStyleBoard(),
+			sudokuBoard,
+		});
 	};
 
 	delay = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -135,53 +127,53 @@ class Board extends Component {
 		if (this.state.currentlyRunning) return;
 
 		this.setState({ currentlyRunning: true }, async () => {
-			const sudokuBoard = this.state.sudokuBoard;
-			const styleBoard = this.state.styleBoard;
+			let sudokuBoard = this.returnCopyOf2DArray(this.state.sudokuBoard);
+			let styleBoard = this.returnCopyOf2DArray(this.state.styleBoard);
+
 			//the board has not already been solved by the user
 			if (this.state.steps.length === 0) {
+				//create a copy of the board, not a reference
 				const sudokuBoardCopy = [];
 
 				for (var i = 0; i < sudokuBoard.length; i++)
 					sudokuBoardCopy[i] = sudokuBoard[i].slice();
 
 				//generate the steps with the sudokuBoardCopy so we don't alter the board
-				this.backtrack(0, 0, sudokuBoardCopy, false);
-
-				// the board has already been solved by the user so we need to clear it
-			} else {
-				this.clear(this.state.sudokuBoard, this.state.immutableNumbers);
+				this.backtrack(0, 0, this.returnCopyOf2DArray(sudokuBoard), false);
 			}
+			// the board has already been solved by the user so we need to clear it
+			else this.clear(sudokuBoard, this.state.immutableNumbers);
 
 			for (let i = 0; i < this.state.steps.length; i++) {
-				if (!this.state.currentlyRunning) {
-					return;
-				}
+				if (!this.state.currentlyRunning) return;
 
 				const step = this.state.steps[i];
 
 				sudokuBoard[step.row][step.col] = step.value;
 
-				if (step.valid) styleBoard[step.row][step.col] = "g";
-				//determine the cells to set red
-				else {
-					for (let i = 0; i < step.cells.length; i++) {
-						const rowCol = step.cells[i];
-
-						styleBoard[rowCol[0]][rowCol[1]] = "r";
-						styleBoard[step.row][step.col] = "gr";
-					}
-				}
-				this.setState({ sudokuBoard });
+				this.colourBoard(step, styleBoard);
+				this.setState({ sudokuBoard, styleBoard });
 				await this.delay(100);
-				styleBoard[step.row][step.col] = "w";
-				for (let i = 0; i < step.cells.length; i++) {
-					const rowCol = step.cells[i];
-					styleBoard[rowCol[0]][rowCol[1]] = "w";
-				}
+				this.clearBoard(step, styleBoard);
 			}
 		});
 	};
 
+	initDataBoards = () => {
+		let sudokuBoard = [];
+		let immutableNumbers = [];
+		let styleBoard = [];
+
+		//init the sudokuBoard, immutableNumbers and the styleBoar
+		for (let i = 0; i < 9; i++) {
+			sudokuBoard.push(new Array(9).fill(""));
+			immutableNumbers.push(new Array(9).fill(false));
+			styleBoard.push(new Array(9).fill("w"));
+		}
+		return { sudokuBoard, immutableNumbers, styleBoard };
+	};
+
+	//keeps the immutable numbers clears the rest
 	clear = (sudokuBoard, immutableNumbers) => {
 		//loop through all the squares and clear others
 		for (let row = 0; row < 9; row++) {
@@ -190,6 +182,12 @@ class Board extends Component {
 			}
 		}
 		this.setState({ styleBoard: this.clearStyleBoard(), sudokuBoard });
+	};
+
+	//clears all numbers
+	allClear = () => {
+		this.setState(this.initDataBoards());
+		this.setState({ steps: [] });
 	};
 
 	//sets all the squares in the styleboard to white and returns the cleared board
@@ -217,9 +215,7 @@ class Board extends Component {
 	backtrack = (row, col, board, random) => {
 		let end = false;
 
-		if (row === 9) {
-			return true;
-		}
+		if (row === 9) return true;
 
 		// if the current column and row are immutable
 		if (this.state.immutableNumbers[row][col]) {
@@ -229,14 +225,11 @@ class Board extends Component {
 			// if the current column and row are changeable
 		} else {
 			let choiceArray = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-			if (random) {
-				choiceArray = this.shuffleArray(choiceArray);
-			}
+			if (random) choiceArray = this.shuffleArray(choiceArray);
 
 			for (let choice = 1; choice <= 9; choice++) {
 				// if the current column and row can be changed
 				const value = choiceArray.shift().toString();
-				//const value = choice.toString();
 				board[row][col] = value;
 
 				const validBoard = this.isValidSudoku(board, row, col, value);
@@ -327,19 +320,28 @@ class Board extends Component {
 		return { outcome: true, reason: null, cells: [] };
 	};
 
-	render() {
+	buildBoard() {
 		// build the sudoku board from above
 		const rows = [];
 		for (const [indexRow, row] of this.state.sudokuBoard.entries()) {
 			let ent = [];
 			for (const [indexCol, value] of row.entries()) {
 				let classNames = this.state.styleBoard[indexRow][indexCol];
+
 				if (this.state.immutableNumbers[indexRow][indexCol])
 					classNames += " font-weight-bold";
 
 				ent.push(
 					<td className={classNames} key={indexCol + "-" + indexRow}>
-						{value}
+						<input
+							className={classNames}
+							size={1}
+							style={{ border: "none" }}
+							type="text"
+							value={value}
+							onChange={this.handleOnInput}
+							name={`${indexRow} ${indexCol}`}
+						/>
 					</td>
 				);
 			}
@@ -349,6 +351,46 @@ class Board extends Component {
 				</tr>
 			);
 		}
+		return rows;
+	}
+
+	returnCopyOf2DArray = (array) => {
+		const arrayCopy = [];
+		for (var i = 0; i < array.length; i++) arrayCopy[i] = array[i].slice();
+		return arrayCopy;
+	};
+
+	handleOnInput = ({ target }) => {
+		const { value } = target;
+		const [row, col] = target.name
+			.split(" ")
+			.map((stringIndex) => parseInt(stringIndex));
+		let sudokuBoard = this.returnCopyOf2DArray(this.state.sudokuBoard);
+		sudokuBoard[row][col] = value;
+		this.setState({ sudokuBoard });
+	};
+
+	colourBoard = (step, styleBoard) => {
+		if (step.valid) styleBoard[step.row][step.col] = "g";
+		//determine the cells to set red
+		else {
+			for (let i = 0; i < step.cells.length; i++) {
+				const rowCol = step.cells[i];
+
+				styleBoard[rowCol[0]][rowCol[1]] = "r";
+				styleBoard[step.row][step.col] = "gr";
+			}
+		}
+	};
+	clearBoard = (step, styleBoard) => {
+		styleBoard[step.row][step.col] = "w";
+		for (let i = 0; i < step.cells.length; i++) {
+			const rowCol = step.cells[i];
+			styleBoard[rowCol[0]][rowCol[1]] = "w";
+		}
+	};
+	render() {
+		// build the sudoku board from above
 
 		return (
 			<Styled>
@@ -357,32 +399,9 @@ class Board extends Component {
 						<Col>
 							<div className="text-center table-container">
 								<table className="mx-auto mt-4 game-board">
-									<tbody>{rows}</tbody>
+									<tbody>{this.buildBoard()}</tbody>
 								</table>
 								<ButtonGroup className="controls mt-2">
-									<Button
-										onClick={() => {
-											this.setState({ currentlyRunning: false });
-											this.generate();
-										}}
-										variant="outline-dark"
-									>
-										Create
-									</Button>
-									<Button
-										onClick={() => {
-											this.setState({ currentlyRunning: false });
-
-											//end the viz if it is going
-											this.clear(
-												this.state.sudokuBoard,
-												this.state.immutableNumbers
-											);
-										}}
-										variant="outline-dark"
-									>
-										Clear
-									</Button>
 									<Button
 										onClick={() => {
 											this.viz();
@@ -395,7 +414,7 @@ class Board extends Component {
 										onClick={() => {
 											this.setState({ currentlyRunning: false });
 
-											this.solveSudoku(this.state.sudokuBoard);
+											this.solveSudoku();
 										}}
 										variant="outline-dark"
 									>

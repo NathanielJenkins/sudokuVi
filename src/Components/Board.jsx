@@ -387,9 +387,6 @@ class Board extends Component {
 					<Row>
 						<Col>
 							<div className="text-center table-container">
-								<table className="mx-auto mt-4 game-board">
-									<tbody>{this.buildBoard()}</tbody>
-								</table>
 								<ButtonGroup className="controls mt-2">
 									<Button
 										onClick={() => {
@@ -410,6 +407,9 @@ class Board extends Component {
 										Solve
 									</Button>
 								</ButtonGroup>
+								<table className="mx-auto mt-4 game-board">
+									<tbody>{this.buildBoard()}</tbody>
+								</table>
 							</div>
 						</Col>
 					</Row>

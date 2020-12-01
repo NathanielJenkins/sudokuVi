@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 
 import Board from "./Components/Board";
 import NavigationBar from "./Components/NavigationBar";

@@ -44,8 +44,8 @@ class App extends Component {
 		this.setState({ immutableNumbers }, () => {
 			this.backtrack(0, 0, sudokuBoard, true);
 
-			//now that we solved the board, lets delete part of it. Hold 12 numbers
-			for (let i = 0; i < 30; i++) {
+			//now that we solved the board, lets delete part of it. Hold 30 at most numbers
+			for (let i = 0; i < 90; i++) {
 				const row = Math.floor(Math.random() * 9);
 				const col = Math.floor(Math.random() * 9);
 				immutableNumbers[row][col] = true;
@@ -56,21 +56,16 @@ class App extends Component {
 		});
 	};
 
-	solveSudoku = () => {
-		//solves the sudokuBoard
-		let sudokuBoard = this.returnCopyOf2DArray(this.state.sudokuBoard);
-		this.backtrack(0, 0, sudokuBoard, false);
-		this.setState({
-			styleBoard: this.clearStyleBoard(),
-			sudokuBoard,
-		});
-	};
-
 	delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 	handleViz = () => {
 		if (this.state.currentlyRunning) return;
 
+		//Clear any previous style
+		const { styleBoard } = this.initDataBoards();
+		this.setState({ styleBoard });
+
+		//handle the viz
 		this.setState({ currentlyRunning: true }, async () => {
 			let sudokuBoard = this.returnCopyOf2DArray(this.state.sudokuBoard);
 			let styleBoard = this.returnCopyOf2DArray(this.state.styleBoard);
@@ -106,7 +101,16 @@ class App extends Component {
 
 	handleSolve = () => {
 		this.setState({ currentlyRunning: false });
-		this.solveSudoku();
+
+		//solve the sudokuBoard
+		let sudokuBoard = this.returnCopyOf2DArray(this.state.sudokuBoard);
+		this.doClear(sudokuBoard);
+
+		this.backtrack(0, 0, sudokuBoard, false);
+		this.setState({
+			styleBoard: this.clearStyleBoard(),
+			sudokuBoard,
+		});
 	};
 
 	//keeps the immutable numbers clears the rest
@@ -315,21 +319,26 @@ class App extends Component {
 
 		if (!isMutable) {
 			let immutableNumbers = this.returnCopyOf2DArray(immutableNumbersState);
-			immutableNumbers[row][col] = true;
+			immutableNumbers[row][col] = value !== "" ? true : false;
 			this.setState({ immutableNumbers });
 		}
 		this.setState({ sudokuBoard });
 
-		//determine the validity of the board the vis
-		const step = {
-			col,
-			row,
-			value,
-			...this.isValidSudoku(sudokuBoard, row, col, value),
-		};
-
 		const { styleBoard } = this.initDataBoards();
-		this.colourBoard(step, styleBoard);
+		//determine the validity of the board the vis
+
+		//if they are not clearing the value
+		if (value !== "") {
+			const step = {
+				col,
+				row,
+				value,
+				...this.isValidSudoku(sudokuBoard, row, col, value),
+			};
+
+			this.colourBoard(step, styleBoard);
+		}
+
 		this.setState({ styleBoard });
 	};
 
@@ -362,19 +371,24 @@ class App extends Component {
 	};
 
 	handleClear = () => {
-		const { sudokuBoard: sudokuBoardState, immutableNumbers } = this.state;
+		const { sudokuBoard: sudokuBoardState } = this.state;
 		let sudokuBoard = this.returnCopyOf2DArray(sudokuBoardState);
 
-		for (let row = 0; row < 9; row++) {
-			for (let col = 0; col < 9; col++) {
-				if (!immutableNumbers[row][col]) sudokuBoard[row][col] = "";
-			}
-		}
+		this.doClear(sudokuBoard);
 		this.setState({
 			styleBoard: this.clearStyleBoard(),
 			sudokuBoard,
 			currentlyRunning: false,
 		});
+	};
+
+	doClear = (board) => {
+		const { immutableNumbers } = this.state;
+		for (let row = 0; row < 9; row++) {
+			for (let col = 0; col < 9; col++) {
+				if (!immutableNumbers[row][col]) board[row][col] = "";
+			}
+		}
 	};
 
 	handleOnMutableClick = () => {

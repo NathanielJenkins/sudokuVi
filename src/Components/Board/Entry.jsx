@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-const TableEntru = styled.td`
+const TableEntry = styled.td`
 	.w {
 		background-color: white;
 	}
@@ -18,13 +18,13 @@ const TableEntru = styled.td`
 const Entry = (props) => {
 	const { onEntryClick, className, indexCol, indexRow, value } = props;
 	return (
-		<TableEntru
+		<TableEntry
 			onClick={() => onEntryClick(indexRow, indexCol)}
 			className={className}
 			key={indexCol + "-" + indexRow}
 		>
 			{value}
-		</TableEntru>
+		</TableEntry>
 	);
 };
 

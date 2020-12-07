@@ -5,6 +5,7 @@ import Board from "./Components/Board/Board";
 import PhonePad from "./Components/PhonePad/PhonePad";
 import Controls from "./Components/Controls/Controls";
 import NavigationBar from "./Components/NavigationBar";
+import Slider from "./Components/Controls/Slider";
 
 const Styled = styled.div``;
 class App extends Component {
@@ -16,6 +17,8 @@ class App extends Component {
 		immutableNumbers: [],
 		currentSelectedEntry: null,
 		isMutable: true,
+		ms: 200,
+		isSolvable: true,
 	};
 
 	componentDidMount() {
@@ -37,6 +40,7 @@ class App extends Component {
 	};
 
 	handleGenerate = () => {
+		this.setState({ currentlyRunning: false });
 		const { sudokuBoard, immutableNumbers, styleBoard } = this.initDataBoards();
 		this.setState({ styleBoard, sudokuBoard, immutableNumbers });
 
@@ -45,7 +49,7 @@ class App extends Component {
 			this.backtrack(0, 0, sudokuBoard, true);
 
 			//now that we solved the board, lets delete part of it. Hold 30 at most numbers
-			for (let i = 0; i < 90; i++) {
+			for (let i = 0; i < 30; i++) {
 				const row = Math.floor(Math.random() * 9);
 				const col = Math.floor(Math.random() * 9);
 				immutableNumbers[row][col] = true;
@@ -93,21 +97,24 @@ class App extends Component {
 
 				this.colourBoard(step, styleBoard);
 				this.setState({ sudokuBoard, styleBoard });
-				await this.delay(100);
+				await this.delay(this.state.ms);
 				this.clearBoard(step, styleBoard);
 			}
+			this.setState({ currentlyRunning: false });
 		});
 	};
 
 	handleSolve = () => {
 		this.setState({ currentlyRunning: false });
-
+		if (!this.state.isSolvable) return;
 		//solve the sudokuBoard
 		let sudokuBoard = this.returnCopyOf2DArray(this.state.sudokuBoard);
 		this.doClear(sudokuBoard);
 
-		this.backtrack(0, 0, sudokuBoard, false);
+		const isSolvable = this.backtrack(0, 0, sudokuBoard, false);
+
 		this.setState({
+			isSolvable,
 			styleBoard: this.clearStyleBoard(),
 			sudokuBoard,
 		});
@@ -126,8 +133,8 @@ class App extends Component {
 
 	//clears all numbers
 	handleAllClear = () => {
+		this.setState({ currentlyRunning: false, steps: [] });
 		this.setState(this.initDataBoards());
-		this.setState({ steps: [] });
 	};
 
 	//sets all the squares in the styleboard to white and returns the cleared board
@@ -337,6 +344,10 @@ class App extends Component {
 			};
 
 			this.colourBoard(step, styleBoard);
+
+			//set whether the board is solvable
+			if (!step.outcome && !isMutable) this.setState({ isSolvable: false });
+			else this.setState({ isSolvable: true });
 		}
 
 		this.setState({ styleBoard });
@@ -396,6 +407,10 @@ class App extends Component {
 		this.setState({ isMutable });
 	};
 
+	handleOnSliderClick = (value) => {
+		this.setState({ ms: value });
+	};
+
 	render() {
 		return (
 			<Styled>
@@ -413,6 +428,21 @@ class App extends Component {
 								onEntryClick={this.handleEntryClick}
 								className={"mx-auto"}
 							/>
+							{!this.state.isSolvable && (
+								<p className="text-center text-danger">
+									Board is not Solvable!
+								</p>
+							)}
+							{this.state.currentlyRunning && (
+								<Slider
+									label="Visualization Speed"
+									className={"mt-2 mx-auto text-center"}
+									onSliderClick={this.handleOnSliderClick}
+									min={0}
+									max={500}
+									value={500 - this.state.ms}
+								/>
+							)}
 						</Col>
 						<Col xl={6}>
 							<Controls
